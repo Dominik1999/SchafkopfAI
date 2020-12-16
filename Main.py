@@ -4,6 +4,7 @@ from Deck import Deck
 from Stich import Stich
 
 def spiel(Spieler):
+
     ## Ausfuchsen wer gibt
     geber = random.choice(range(4))
     Spieler[geber].set_geber(True)
@@ -11,16 +12,14 @@ def spiel(Spieler):
     dran = (geber+1)%4
 
     ## Spieler der "dran" ist, definiert das Spiel
-    for i in len(Spieler):
 
     Spielfarbe = Spieler[dran].spielen_auf()
     if not Spielfarbe:
         print("{Spieler[(dran)]}} - kein Rufspiel möglich für Spieler {Spieler[(geber+1)%4].name}, siehe Karten {Spieler[(geber+1)%4].karten}")
     dran += 1
 
-
     ## Definieren der Teams
-    Spieler[(geber+1)%4].set_dran()
+    Spieler[(geber+1)%4].set_dran(dran)
 
     for i in Spieler:
         Spieler[i].Spielfarbe = Spielfarbe
@@ -28,6 +27,7 @@ def spiel(Spieler):
         if Spieler[i].hat_Karte(Spielfarbe, 'Ass'):
             Spieler[i].ist_spieler = True
             Mitspieler_Nummer = i
+
     print(f"{Spieler[(geber+1)%4].name} [kommt raus] und "
             f"{Spieler[Mitspieler_Nummer].name} "
             f"sind Spieler auf die {Spielfarbe}-Ass")
