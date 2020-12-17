@@ -4,8 +4,8 @@ import random
 
 class Deck:
     def __init__(self):
-        farben = ['Eichel', 'Gras', 'Herz', 'Schellen']
-        schlaege = ['7', '8', '9', 'Unter', 'Ober', 'König', '10', 'Ass']
+        farben = ["Eichel", "Gras", "Herz", "Schellen"]
+        schlaege = ["7", "8", "9", "Unter", "Ober", "König", "10", "Ass"]
         self.deck = []
         for farbe in farben:
             for schlag in schlaege:
