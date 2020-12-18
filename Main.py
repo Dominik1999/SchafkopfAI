@@ -4,110 +4,142 @@ from Deck import Deck
 from Stich import Stich
 
 
-def spiel(Spieler):
+def next_turn(players) -> int:
+    turn = whos_turn(players)
+    players[turn].dran = False
+    next_player = (turn + 1) % 4
+    players[next_player].dran = True
+    return next_player
 
-    # Ausfuchsen wer gibt
-    geber = random.choice(range(4))
-    Spieler[geber].set_geber(True)
 
-    dran = (geber + 1) % 4
+def set_turn(players, position_to_set) -> None:
+    for player in players:
+        players[player].dran = False
 
-    # Spieler der "dran" ist, definiert das Spiel
+    players[position_to_set].dran = True
+    return None
 
-    Spielfarbe = Spieler[dran].spielen_auf()
-    if not Spielfarbe:
-        print(
-            "{Spieler[(dran)]}} - kein Rufspiel möglich für Spieler {Spieler[(geber+1)%4].name}, siehe Karten {Spieler[(geber+1)%4].karten}"
-        )
-    dran += 1
 
-    # Definieren der Teams
-    Spieler[(geber + 1) % 4].set_dran(dran)
+def whos_turn(players) -> int:
+    turn = [number for number in players if players[number].dran is True]
+    if len(turn) > 1:
+        print(len)
+        breakpoint()
+    if turn:
+        return turn[0]
+    return None
 
-    for i in Spieler:
-        Spieler[i].Spielfarbe = Spielfarbe
 
-        if Spieler[i].hat_Karte(Spielfarbe, "Ass"):
-            Spieler[i].ist_spieler = True
-            Mitspieler_Nummer = i
+def play(players):
+
+    # Who starts?
+    set_turn(players=players, position_to_set=random.randint(0, 3))
+    starting_player = whos_turn(players=players)
+
+    # Who's turn it is, can define the game
+    for i in range(4):
+        colour_of_that_game = players[starting_player].spielen_auf()
+        if colour_of_that_game:
+            players[starting_player].ist_spieler = True
+            print(f"{players[starting_player].name} spielt auf {colour_of_that_game}-Ass")
+            break
+        if not colour_of_that_game:
+            print(
+                f"Kein Rufspiel möglich für Spieler {players[starting_player].name}, "
+                f"siehe Karten: {[karte.__str__() for karte in players[starting_player].karten]}"
+            )
+            starting_player = next_turn(players)
+
+    # ATM we start a new game if no one can play a Rufspiel
+    if not colour_of_that_game:
+        return main()
+
+    # Now we tell every player what game we play (TODO add class game that
+    # consists of 8 game tricks)
+    for player in players:
+        players[player].colour_of_the_game = colour_of_that_game
+
+    # Define the teams - identify the teammate of the starting player
+    teammate_of_starting_player = [
+        player for player in players if players[player].hat_Karte(
+            colour_of_that_game, "Ass")][0]
+    players[teammate_of_starting_player].ist_spieler = True
 
     print(
-        f"{Spieler[(geber+1)%4].name} [kommt raus] und "
-        f"{Spieler[Mitspieler_Nummer].name} "
-        f"sind Spieler auf die {Spielfarbe}-Ass"
+        f"{players[starting_player].name} [kommt raus] und "
+        f"{players[teammate_of_starting_player].name} "
+        f"sind Spieler auf die {colour_of_that_game}-Ass"
     )
 
-    for Stich_Nummer in range(8):
-        Gewinner = stich(Spieler, dran)
-        dran = Gewinner.nummer
-    return Spieler
+    # now let's play that game
+    for _ in range(8):
+        winner_of_the_trick = play_game_trick(players=players)
+        set_turn(players=players, position_to_set=winner_of_the_trick.nummer)
+
+    # after 8 rounds, who is the winner?
+    playing_team = [player.nummer for player in players.values()
+                    if player.ist_spieler is True]
+    non_playing_team = [
+        player.nummer for player in players.values() if player.ist_spieler is False]
+
+    assert len(playing_team) == 2
+    assert len(non_playing_team) == 2
+
+    winning_team_of_the_game = playing_team if sum(
+        players[player].get_punkte() for player in playing_team) > 60 else non_playing_team
+
+    return winning_team_of_the_game
 
 
-def stich(Spieler, erster):
+def play_game_trick(players) -> SpielerKlasse:
     stich = Stich()
 
     # wer auch immer "dran" ist, kommt raus und kann irgendeine Karte spielen
-    for i in range(4):
-        dran = (erster + i) % 4
-        stich.Karte_reinlegen(Spieler[dran].spielt_Karte(stich), Spieler[dran])
+    for _ in players:
+        stich.Karte_reinlegen(players[whos_turn(players)].spielt_Karte(
+            stich), players[whos_turn(players)])
+        next_turn(players)
 
     print(stich)
 
-    Gewinner = stich.Gewinner()
+    winner_of_the_trick = stich.winner()
 
     # Punkte für den Gewinner
-    Gewinner.Stiche.append(stich)
+    winner_of_the_trick.stiche.append(stich)
 
-    return Gewinner
+    return winner_of_the_trick
 
 
 def main():
     deck = Deck()
     deck.mischen()
 
-    Spieler = {}
-    namen = ["Hans", "Sepp", "Domi", "Brucki"]
-    random.shuffle(namen)
-    for i in range(4):
-        Spieler[i] = SpielerKlasse(i, namen.pop())
-        Spieler[i].get_karten(deck.getKarten())
+    players = {}
+    names = ["Hans", "Sepp", "Domi", "Brucki"]
+    random.shuffle(names)
 
-    for j in Spieler:
+    for i in range(4):
+        players[i] = SpielerKlasse(i, names.pop())
+        players[i].get_karten(deck.getKarten())
+
+    print("\n\n Neue Runde, runde, runde, ...\n\n")
+    for j in players:
         print(
             "%s: %s "
-            % (Spieler[j].name, ", ".join([str(karte) for karte in Spieler[j].karten]))
+            % (players[j].name, ", ".join([str(karte) for karte in players[j].karten]))
         )
 
-    spiel(Spieler)
+    winning_team_of_the_game = play(players)
 
-    # wer hat gewonnen?
-    for i in Spieler:
-        print("%s: %s Punkte" % (Spieler[i].name, Spieler[i].get_punkte()))
+    winner1 = winning_team_of_the_game[0]
+    winner2 = winning_team_of_the_game[1]
 
-    Spieler_Punkte = 0
-    spielende_spieler = []
-    nicht_spielende_spieler = []
-    for s in Spieler.values():
-        if s.ist_spieler:
-            spielende_spieler.append(s)
-            Spieler_Punkte += s.get_punkte()
-        else:
-            nicht_spielende_spieler.append(s)
-
-    if Spieler_Punkte > 60:
-        print(
-            "Spieler (%s, %s) gewinnen mit %d Punkten"
-            % (spielende_spieler[0].name, spielende_spieler[1].name, Spieler_Punkte)
-        )
-    else:
-        print(
-            "Nicht-Spieler (%s, %s) gewinnen mit %d Punkten"
-            % (
-                nicht_spielende_spieler[0].name,
-                nicht_spielende_spieler[1].name,
-                120 - Spieler_Punkte,
-            )
-        )
+    print(
+        f'Gewinner: {players[winner1].name} und {players[winner2].name} '
+        f'mit {players[winner1].get_punkte() + players[winner2].get_punkte()} Punkten!'
+    )
 
 
-main()
+# Driver code
+for _ in range(100):
+    main()

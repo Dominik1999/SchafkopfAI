@@ -9,14 +9,10 @@ class Stich:
     def Karte_reinlegen(self, karte, Spieler):
 
         self.data.append({"karte": karte, "spieler": Spieler})
-
-        # self.spieler[Spieler.nummer] = Spieler
-
         if not self.Spielfarbe:
             self.Spielfarbe = karte.wirkliche_Farbe()
-        # self.karten[Spieler.nummer] = karte
 
-    def Gewinner(self):
+    def winner(self):
         tmp = sorted(
             self.data,
             key=lambda x: x["karte"].get_Werte()
@@ -29,7 +25,7 @@ class Stich:
         return "%s (Gewinner: %s)" % (
             ", ".join(["%s: %s" % (x["spieler"].name, x["karte"])
                        for x in self.data]),
-            self.Gewinner().name,
+            self.winner().name,
         )
 
     def get_punkte(self):

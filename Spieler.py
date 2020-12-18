@@ -6,19 +6,16 @@ class SpielerKlasse:
         self.name = name
         self.nummer = nummer
         self.ist_spieler = False
-        self.Stiche = []
+        self.dran = False
+        self.stiche = []
+        self.karten = []
+        self.colour_of_the_game = None
 
     def get_punkte(self):
-        return sum([stich.get_punkte() for stich in self.Stiche])
+        return sum([stich.get_punkte() for stich in self.stiche])
 
     def get_karten(self, karten):
         self.karten = karten
-
-    def set_geber(self, ist_geber):
-        self.Geber = ist_geber
-
-    def set_dran(self, dran):
-        self.dran = dran
 
     def hat_Karte(self, farbe, schlag):
         for karte in self.karten:
@@ -46,7 +43,8 @@ class SpielerKlasse:
         if len(farben) == 0:
             return None
         # TODO AI einfügen
-        return random.choice(farben)
+        self.colour_of_the_game = random.choice(farben)
+        return self.colour_of_the_game
 
     def hat_wirkliche_Farbe(self, farbe):
         for karte in self.karten:
@@ -57,14 +55,21 @@ class SpielerKlasse:
     def __moegliche_Spielkarten(self, stich):
         # der erste darf alles spielen,...
         if not stich.Spielfarbe:
-            # ...außer selbst suchen, wenn er <4 der Farbe und die Rufsau hat
-            if not self.hat_Karte(self.Spielfarbe, "Ass"):
+            # ... sofern er nicht die Rufsau hat
+            if not self.hat_Karte(self.colour_of_the_game, "Ass"):
                 return self.karten
-            return list(
-                karte
-                for karte in self.karten
-                if karte.wirkliche_Farbe() != self.Spielfarbe or karte.schlag is "Ass"
-            )
+
+            # ... hat er die Rufsau, darf er weglaufen, falls er >3x Farbe hat
+            elif sum(self.colour_of_the_game == karte.wirkliche_Farbe() for karte in self.karten) > 3:
+                return self.karten
+
+            # ... ist das nicht der Fall, darf er nur nicht selbst suchen
+            else:
+                return list(
+                    karte
+                    for karte in self.karten
+                    if (karte.wirkliche_Farbe() != self.colour_of_the_game or karte.schlag == "Ass")
+                )
 
         if not self.hat_wirkliche_Farbe(stich.Spielfarbe):
             return self.karten
