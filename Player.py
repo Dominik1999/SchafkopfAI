@@ -1,15 +1,15 @@
 import random
 
 
-class SpielerKlasse:
-    def __init__(self, nummer, name):
+class Players:
+    def __init__(self, number, name):
         self.name = name
-        self.nummer = nummer
+        self.number = number
         self.ist_spieler = False
         self.dran = False
+        self.colour_of_the_game = None
         self.stiche = []
         self.karten = []
-        self.colour_of_the_game = None
 
     def get_punkte(self):
         return sum([stich.get_punkte() for stich in self.stiche])
@@ -39,12 +39,12 @@ class SpielerKlasse:
         return list(filter(moegliche_farben.get, moegliche_farben))
 
     def spielen_auf(self):
-        farben = self.__moegliche_Rufsau_Farben()
-        if len(farben) == 0:
+        possible_colors = self.__moegliche_Rufsau_Farben()
+        if len(possible_colors) == 0:
             return None
         # TODO AI einfügen
-        self.colour_of_the_game = random.choice(farben)
-        return self.colour_of_the_game
+        color_of_the_game = random.choice(possible_colors)
+        return color_of_the_game
 
     def hat_wirkliche_Farbe(self, farbe):
         for karte in self.karten:
@@ -88,3 +88,10 @@ class SpielerKlasse:
             if karte.ist_karte(Spielkarte.farbe, Spielkarte.schlag):
                 self.karten.remove(Spielkarte)
         return Spielkarte
+
+    def reset(self):
+        self.ist_spieler = False
+        self.dran = False
+        self.colour_of_the_game = None
+        self.stiche = []
+        self.karten = []

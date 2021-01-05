@@ -1,4 +1,4 @@
-from Karte import Karte
+from Card import Karte
 import random
 
 
@@ -11,7 +11,7 @@ class Deck:
             for schlag in schlaege:
                 self.deck.append(Karte(farbe, schlag))
 
-    def mischen(self):
+    def shuffle(self):
         random.shuffle(self.deck)
 
     def getKarten(self):

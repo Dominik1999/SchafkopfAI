@@ -1,4 +1,4 @@
-class Stich:
+class Trick:
     def __init__(self):
         self.Spielfarbe = None
         self.data = []
