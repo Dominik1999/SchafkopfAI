@@ -6,6 +6,7 @@ class Players:
         self.name = name
         self.number = number
         self.ist_spieler = False
+        self.ist_nicht_spieler = False
         self.dran = False
         self.colour_of_the_game = None
         self.stiche = []
@@ -81,9 +82,9 @@ class Players:
         )
         # Trumpf ist auch eine Spielfarbe
 
-    def spielt_Karte(self, stich):
+    def spielt_Karte(self, trick):
         # TODO ersetzen durch AI
-        Spielkarte = random.choice(self.__moegliche_Spielkarten(stich))
+        Spielkarte = random.choice(self.__moegliche_Spielkarten(trick))
         for karte in self.karten:
             if karte.ist_karte(Spielkarte.farbe, Spielkarte.schlag):
                 self.karten.remove(Spielkarte)

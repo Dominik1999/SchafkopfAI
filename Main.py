@@ -14,14 +14,14 @@ def set_turn(game_state, position_to_set) -> None:
     return None
 
 
-def whos_turn(game_state) -> int:
+def whose_turn(game_state) -> int:
     return game_state['current_turn']
 
 
 def define_game(players, game_state):
     # Find out who starts?
     set_turn(game_state=game_state, position_to_set=random.randint(0, 3))
-    starting_player = whos_turn(game_state=game_state)
+    starting_player = whose_turn(game_state=game_state)
 
     # We only allow Rufspiel atm
     game_state['game_type'] = 'normal'
@@ -45,7 +45,7 @@ def define_game(players, game_state):
 
     # ATM we start a new game if no one can play a Rufspiel
     if not color_of_the_game:
-        game_state['current_phase'] = 4
+        game_state['phase'] = 3
         return game_state
 
     return game_state
@@ -69,18 +69,25 @@ def play(players, game_state):
     players[teammate_of_starting_player].ist_spieler = True
 
     print(
-        f"{players[whos_turn(game_state=game_state)].name} kommt raus und "
+        f"{players[whose_turn(game_state=game_state)].name} kommt raus und "
         f"{players[teammate_of_starting_player].name} "
         f"sind Spieler auf die {game_state['called_ace']}-Ass"
     )
+    # The others know that they are nicht spieler
+    for player_number in players.keys():
+        if player_number not in (whose_turn(game_state=game_state), teammate_of_starting_player):
+            players[player_number].ist_nicht_spieler = True
 
     # Now let's play that game
+    game_state['phase'] = 2
     for trick_number in range(8):
         winner_of_the_trick, trick = play_game_trick(players=players, game_state=game_state)
         game_state['played_tricks'][trick_number] = trick
         set_turn(game_state=game_state, position_to_set=winner_of_the_trick.number)
 
     # After 8 rounds, we know who won the game
+    game_state['phase'] = 4
+
     playing_team = [player.number for player in players.values()
                     if player.ist_spieler is True]
     non_playing_team = [
@@ -100,8 +107,17 @@ def play_game_trick(players, game_state) -> (Players, Trick):
 
     # Whose turn it is can start the trick
     for _ in players:
-        card = players[whos_turn(game_state=game_state)].spielt_Karte(trick)
-        trick.Karte_reinlegen(card, players[whos_turn(game_state=game_state)])
+        turn = whose_turn(game_state=game_state)
+        card = players[turn].spielt_Karte(trick)
+
+        # When called ace is played, everyone knows the teams
+        if card.farbe == game_state['called_ace'] and card.schlag == "Ass":
+            game_state['teams']['ist_spieler'].append(turn)
+            for player_number in players.keys():
+                if player_number not in game_state['teams']['ist_spieler']:
+                    game_state['teams']['nicht_spieler'].append(player_number)
+
+        trick.Karte_reinlegen(card, players[turn])
         game_state['current_trick'] = trick
         next_turn(game_state=game_state)
 
@@ -119,8 +135,8 @@ def main(players, games, round):
     print("\n\n Neue Runde, runde, runde, ...\n\n")
 
     # Reset the player's data
-    for player_number in players:
-        players[player_number].reset()
+    for player in players.values():
+        player.reset()
 
     # The game state is what every player can know at any given moment
     game_state = dict(          # change to named tuple for performance reasons
