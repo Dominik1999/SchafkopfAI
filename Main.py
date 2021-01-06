@@ -1,137 +1,137 @@
 import random
+from typing import List
+
+from Game_Environment import Gamestate
 from Player import Players
 from Deck import Deck
 from Trick import Trick
 
 
 def next_turn(game_state) -> int:
-    game_state['current_turn'] = (game_state['current_turn'] + 1) % 4
-    return game_state['current_turn']
+    game_state.current_turn = (game_state.current_turn + 1) % 4
+    return game_state.current_turn
 
 
 def set_turn(game_state, position_to_set) -> None:
-    game_state['current_turn'] = game_state['players'][position_to_set].number
+    game_state.current_turn = game_state.players[position_to_set].number
     return None
 
 
-def whose_turn(game_state) -> int:
-    return game_state['current_turn']
-
-
-def define_game(players, game_state):
+def define_game(game_state):
     # Find out who starts?
     set_turn(game_state=game_state, position_to_set=random.randint(0, 3))
-    starting_player = whose_turn(game_state=game_state)
+    starting_player = game_state.players[game_state.current_turn]
 
     # We only allow Rufspiel atm
-    game_state['game_type'] = 'normal'
+    game_state.game_type = 'normal'
 
     # Starting player can define the game
     color_of_the_game = None
     for _ in range(4):
-        color_of_the_game = players[starting_player].spielen_auf()
+        color_of_the_game = starting_player.spielen_auf()
         if color_of_the_game:
-            game_state['called_ace'] = color_of_the_game
-            game_state['teams']['ist_spieler'].append(players[starting_player].number)
-            players[starting_player].ist_spieler = True
-            print(f"{players[starting_player].name} spielt auf {color_of_the_game}-Ass")
+            game_state.called_ace = color_of_the_game
+            game_state.teams['ist_spieler'].append(starting_player.number)
+            starting_player.ist_spieler = True
+            print(f"{starting_player.name} spielt auf {color_of_the_game}-Ass")
             break
         if not color_of_the_game:
             print(
-                f"Kein Rufspiel möglich für Spieler {players[starting_player].name}, "
-                f"siehe Karten: {[card.__str__() for card in players[starting_player].karten]}"
+                f"Kein Rufspiel möglich für Spieler {starting_player.name}, "
+                f"siehe Karten: {[card.__str__() for card in starting_player.karten]}"
             )
             starting_player = next_turn(game_state)
 
     # ATM we start a new game if no one can play a Rufspiel
     if not color_of_the_game:
-        game_state['phase'] = 3
+        game_state.game_phase = 5
         return game_state
 
     return game_state
 
 
-def play(players, game_state):
-    # Start to find our what to play
-    game_state['phase'] = 1
+def play(game_state) -> Gamestate:
+    # Start to find out what to play
+    game_state.game_phase = 1
 
     # Define the game we are going to play
-    game_state = define_game(players=players, game_state=game_state)
+    game_state = define_game(game_state=game_state)
 
     # Now we tell every player what game we play
-    for player in players.values():
-        player.colour_of_the_game = game_state['called_ace']
+    for player in game_state.players.values():
+        player.colour_of_the_game = game_state.called_ace
 
     # Define the teams - identify the teammate of the starting player and tell only him
     teammate_of_starting_player = [
-        player for player in players if players[player].hat_Karte(
-            game_state['called_ace'], "Ass")][0]
-    players[teammate_of_starting_player].ist_spieler = True
+        player.number for player in game_state.players.values() if player.hat_Karte(
+            game_state.called_ace, "Ass")][0]
+    game_state.players[teammate_of_starting_player].ist_spieler = True
 
     print(
-        f"{players[whose_turn(game_state=game_state)].name} kommt raus und "
-        f"{players[teammate_of_starting_player].name} "
-        f"sind Spieler auf die {game_state['called_ace']}-Ass"
+        f"{game_state.players[game_state.current_turn].name} kommt raus und "
+        f"{game_state.players[teammate_of_starting_player].name} "
+        f"sind Spieler auf die {game_state.called_ace}-Ass"
     )
-    # The others know that they are nicht spieler
-    for player_number in players.keys():
-        if player_number not in (whose_turn(game_state=game_state), teammate_of_starting_player):
-            players[player_number].ist_nicht_spieler = True
+
+    # The others know that they are nicht_spieler
+    for player in game_state.players.values():
+        if player.number not in (game_state.current_turn, teammate_of_starting_player):
+            player.ist_nicht_spieler = True
 
     # Now let's play that game
-    game_state['phase'] = 2
+    game_state.game_phase = 2
+
     for trick_number in range(8):
-        winner_of_the_trick, trick = play_game_trick(players=players, game_state=game_state)
-        game_state['played_tricks'][trick_number] = trick
-        set_turn(game_state=game_state, position_to_set=winner_of_the_trick.number)
+        # Play the trick
+        game_state = play_game_trick(game_state=game_state)
+        winner_of_the_trick = game_state.played_tricks[trick_number].winner().number
+        set_turn(game_state=game_state, position_to_set=winner_of_the_trick)
 
     # After 8 rounds, we know who won the game
-    game_state['phase'] = 4
+    if game_state.points['ist_spieler'] > 60:
+        game_state.winner = game_state.teams['ist_spieler']
+    else:
+        game_state.winner = game_state.teams['nicht_spieler']
 
-    playing_team = [player.number for player in players.values()
-                    if player.ist_spieler is True]
-    non_playing_team = [
-        player.number for player in players.values() if player.ist_spieler is False]
+    game_state.game_phase = 3
 
-    assert len(playing_team) == 2
-    assert len(non_playing_team) == 2
-
-    winning_team_of_the_game = playing_team if sum(
-        players[player].get_punkte() for player in playing_team) > 60 else non_playing_team
-
-    return winning_team_of_the_game
+    return game_state
 
 
-def play_game_trick(players, game_state) -> (Players, Trick):
+def play_game_trick(game_state) -> Gamestate:
     trick = Trick()
 
     # Whose turn it is can start the trick
-    for _ in players:
-        turn = whose_turn(game_state=game_state)
-        card = players[turn].spielt_Karte(trick)
+    for _ in game_state.players:
+        card = game_state.players[game_state.current_turn].spielt_Karte(trick)
 
         # When called ace is played, everyone knows the teams
-        if card.farbe == game_state['called_ace'] and card.schlag == "Ass":
-            game_state['teams']['ist_spieler'].append(turn)
-            for player_number in players.keys():
-                if player_number not in game_state['teams']['ist_spieler']:
-                    game_state['teams']['nicht_spieler'].append(player_number)
+        if card.farbe == game_state.called_ace and card.schlag == "Ass":
+            game_state.teams['ist_spieler'].append(game_state.current_turn)
+            for player in game_state.players.values():
+                if player.number not in game_state.teams['ist_spieler']:
+                    game_state.teams['nicht_spieler'].append(player.number)
 
-        trick.Karte_reinlegen(card, players[turn])
-        game_state['current_trick'] = trick
+        trick.Karte_reinlegen(card, game_state.players[game_state.current_turn])
+        game_state.current_trick = trick
         next_turn(game_state=game_state)
+
+    # Update data
+    game_state.played_tricks[len(game_state.played_tricks)] = trick
+    if trick.winner() in game_state.teams['ist_spieler']:
+        game_state.points['ist_spieler'] += trick.get_punkte()
+    else:
+        game_state.points['nicht_spieler'] += trick.get_punkte()
 
     print(trick)
 
-    winner_of_the_trick = trick.winner()
+    # Points for the winner
+    trick.winner().stiche.append(trick)
 
-    # Punkte für den Gewinner
-    winner_of_the_trick.stiche.append(trick)
-
-    return winner_of_the_trick, trick
+    return game_state
 
 
-def main(players, games, round):
+def main(players) -> List:
     print("\n\n Neue Runde, runde, runde, ...\n\n")
 
     # Reset the player's data
@@ -139,61 +139,31 @@ def main(players, games, round):
         player.reset()
 
     # The game state is what every player can know at any given moment
-    game_state = dict(          # change to named tuple for performance reasons
-        players=players,        # players and their order
-        current_turn=None,      # who's turn it is
-        teams=dict(
-            ist_spieler=[],
-            nicht_spieler=[]
-        ),                      # which teams are known at that time
-        phase=None,             # 1: who plays, 2: playing, 3: terminated, 4: finalized
-        game_type=None,         # normal or solo
-        called_ace=None,        # color of ace that is called
-        played_tricks={},       # already played tricks
-        points_per_player={},   # which team and player has how many points
-        current_trick={},       # what is the current trick
-    )
+    game_state = Gamestate(players=players)
 
     # Let's hand out the cards for that game
     deck = Deck()
     deck.shuffle()
-    for player_number in game_state['players']:
-        players[player_number].get_karten(deck.getKarten())
+
+    for player in game_state.players.values():
+        player.get_karten(deck.getKarten())
         print(
             "%s: %s "
-            % (players[player_number].name, ", ".join([str(card) for card in players[player_number].karten]))
+            % (player.name, ", ".join([str(card) for card in player.karten]))
         )
 
     # Ok, let's play the game
-    winning_team_of_the_game = play(players=players, game_state=game_state)
+    play(game_state=game_state)
 
-    winner1 = winning_team_of_the_game[0]
-    winner2 = winning_team_of_the_game[1]
-
-    games[round] = [players[winner1].name, players[winner2].name]
-    print(
-        f'Gewinner: {players[winner1].name} und {players[winner2].name} '
-        f'mit {players[winner1].get_punkte() + players[winner2].get_punkte()} Punkten!'
-    )
+    return game_state.winner
 
 
 # Driver code
 names = ["Hans", "Sepp", "Domi", "Brucki"]
 random.shuffle(names)
 players = {}
-games = {}
-stats = {}
-
 for i in range(4):
     players[i] = Players(i, names.pop())
 
-for round in range(100):
-    main(players=players, games=games, round=round)
-
-for round in games:
-    for name in games[round]:
-        if name not in stats.keys():
-            stats[name] = 0
-        stats[name] += 1
-
-print(stats)
+winner = main(players=players)
+print(f"{players[winner[0]].name} und {players[winner[1]].name} haben gewonnen")
