@@ -1,7 +1,7 @@
 import random
 from typing import List
 
-from Game_Environment import Gamestate
+from Game_State import Gamestate
 from Player import Players
 from Deck import Deck
 from Trick import Trick
