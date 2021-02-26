@@ -119,7 +119,7 @@ def translate_result(result):
         num_result = False
     return num_result
 
-filename = "/models/data/get_data/games525-527.csv"
+filename = "/models/training_data/get_data/games525-527.csv"
 
 games = pd.read_csv(filename, sep=";", header=[0])
 games_dict = {}

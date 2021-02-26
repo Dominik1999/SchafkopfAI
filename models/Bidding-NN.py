@@ -8,7 +8,7 @@ from tensorflow.python.keras.optimizer_v1 import Adam
 from utils import one_hot_cards, translate_cards_to_str, translate_games_to_str, one_hot_encode_game
 
 # get the pandas dataframe
-store = pd.HDFStore('data/process_data/bidding-no-pos-700k-incl-all-pass.h5') # take bidding-no-pos-700k-incl-all-pass.h5 for real process_data
+store = pd.HDFStore('training_data/data/bidding-no-pos-700k-incl-all-pass.h5') # take bidding-no-pos-700k-incl-all-pass.h5 for real process_data
 games_data = store['games_data']
 
 # sanity check of process_data - for new process_data batch useful
@@ -59,7 +59,7 @@ cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                  save_weights_only=True,
                                                  verbose=1)
 
-bidding_nn.fit(train_dataset, epochs=10, callbacks=[cp_callback]) # add validation data?
+bidding_nn.fit(train_dataset, epochs=10, callbacks=[cp_callback]) # add validation training_data?
 test_loss, test_acc = bidding_nn.evaluate(test_dataset, verbose=2)
 
 print('\nTest accuracy:', test_acc)

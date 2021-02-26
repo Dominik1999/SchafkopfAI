@@ -68,7 +68,7 @@ class SchafkopfSpider(InitSpider):
         # Saving into the csv
         game_protocol = clean_dict(game_protocol)
         fieldnames = list(game_protocol.keys())
-        with open("/models/data/Get process_data/Get process_data/spiders/games500-504.csv", 'a', encoding='utf-8', newline='') as f:
+        with open("/models/training_data/Get process_data/Get process_data/spiders/games500-504.csv", 'a', encoding='utf-8', newline='') as f:
             writer = DictWriter(f, fieldnames=fieldnames, delimiter=';')
             #writer.writeheader()
             writer.writerow(game_protocol)

@@ -1,13 +1,3 @@
 # Project exclude paths
-/models/data/process_data/bidding-no-pos-700k-incl-all-pass.h5
-/models/data/process_data/bidding-no-pos-50000002-50499999.h5
-/models/data/process_data/bidding-no-pos-51000028-51408079.h5
-/models/data/process_data/bidding-no-pos-51400004-51499998.h5
-/models/data/process_data/bidding-no-pos-51400049-51599997.h5
-/models/data/process_data/bidding-no-pos-51500004-51699998.h5
-/models/data/process_data/bidding-no-pos-51700002-51899997.h5
-/models/data/process_data/bidding-no-pos-51900002-52099998.h5
-/models/data/process_data/bidding-no-pos-52100001-52299999.h5
-/models/data/process_data/bidding-no-pos-52300002-52499997.h5
-/models/data/process_data/bidding-no-pos-52500001-52699996.h5
+/models/training_data/data/
 /venv/
