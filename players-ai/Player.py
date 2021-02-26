@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from Rules import Rules
+from rules import Rules
 
 
 class Player(ABC):

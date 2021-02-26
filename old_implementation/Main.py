@@ -1,7 +1,7 @@
 import random
 from typing import List
 
-from Game_State import Gamestate
+from game_state import Gamestate
 from Player import Players
 from Deck import Deck
 from Trick import Trick
@@ -116,7 +116,7 @@ def play_game_trick(game_state) -> Gamestate:
         game_state.current_trick = trick
         next_turn(game_state=game_state)
 
-    # Update data
+    # Update process_data
     game_state.played_tricks[len(game_state.played_tricks)] = trick
     if trick.winner() in game_state.teams['ist_spieler']:
         game_state.points['ist_spieler'] += trick.get_punkte()
@@ -134,7 +134,7 @@ def play_game_trick(game_state) -> Gamestate:
 def main(players) -> List:
     print("\n\n Neue Runde, runde, runde, ...\n\n")
 
-    # Reset the player's data
+    # Reset the player's process_data
     for player in players.values():
         player.reset()
 

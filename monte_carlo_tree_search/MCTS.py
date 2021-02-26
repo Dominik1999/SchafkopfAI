@@ -1,5 +1,5 @@
 """
-A minimal implementation of Monte Carlo tree search (MCTS) in Python 3
+A minimal implementation of Monte Carlo tree search (monte_carlo_tree_search) in Python 3
 Luke Harold Miles, July 2019, Public Domain Dedication
 See also https://en.wikipedia.org/wiki/Monte_Carlo_tree_search
 https://gist.github.com/qpwo/c538c6f73727e254fdc7fab81024f6e1
@@ -102,7 +102,7 @@ class MCTS:
 class Node(ABC):
     """
     A representation of a single board state.
-    MCTS works by constructing a tree of these Nodes.
+    monte_carlo_tree_search works by constructing a tree of these Nodes.
     Could be e.g. a chess or checkers board state.
     """
 

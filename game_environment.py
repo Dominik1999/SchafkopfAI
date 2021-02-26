@@ -1,7 +1,7 @@
 import random
 
-from Game_State import PublicGameState
-from Rules import Rules
+from game_state import PublicGameState
+from rules import Rules
 import numpy as np
 
 

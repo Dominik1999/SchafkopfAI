@@ -1,5 +1,5 @@
 """
-An example implementation of the abstract Node class for use in MCTS
+An example implementation of the abstract Node class for use in monte_carlo_tree_search
 If you run this file then you can play against the computer.
 A tic-tac-toe board is represented as a tuple of 9 values, each either None,
 True, or False, respectively meaning 'empty', 'X', and 'O'.
@@ -17,7 +17,7 @@ corrresponds to this tuple:
 
 from collections import namedtuple
 from random import choice
-from MCTS import MCTS, Node
+from monte_carlo_tree_search import MCTS, Node
 from termcolor import colored
 
 _TTTB = namedtuple("TicTacToeBoard", "tup turn winner terminal")

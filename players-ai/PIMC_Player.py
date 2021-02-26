@@ -1,8 +1,7 @@
-import utils
-from mct import MonteCarloTree
-from Game_State import PublicGameState
-from Rules import Rules
-from Game_Environment import SchafkopfEnv
+from monte_carlo_tree_search.mct import MonteCarloTree
+from game_state import PublicGameState
+from rules import Rules
+from game_environment import SchafkopfEnv
 from Player import Player
 import random
 
@@ -16,13 +15,21 @@ class PIMCPlayer(Player):
         self.agent = agent
 
     def act(self, state):
-        return self.run_mcts(state["game_state"], state["current_player_cards"])
+        if state["game_state"].game_stage == Rules.BIDDING:
+            ## ToDo: Insert standard feed forward neural network - 2 layers a 50 neurons
+            print("PIMC-Agent")
+            print(state)
+            breakpoint()
+            return self.run_mcts(state["game_state"], state["current_player_cards"])
+        else:
+            return self.run_mcts(state["game_state"], state["current_player_cards"])
 
     def run_mcts(self, game_state, player_cards):
-
+        print("Run-monte_carlo_tree_search")
         cummulative_action_count_rewards = {}
 
         for i in range(self.samples):
+            print("Run-Sample")
             sampled_player_hands = self.sample_player_hands(game_state, player_cards)
             mct = MonteCarloTree(game_state, sampled_player_hands, self.rules.allowed_actions(game_state, player_cards),
                                  player=self.agent)

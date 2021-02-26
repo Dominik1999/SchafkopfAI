@@ -5,7 +5,7 @@ import random
 # contains information about the game that is known by all players
 from copy import copy
 
-from Rules import Rules
+from rules import Rules
 
 
 class PublicGameState:

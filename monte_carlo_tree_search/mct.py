@@ -2,7 +2,7 @@ import random
 
 from Node import Node
 from RandomPlayer import RandomPlayer
-from Game_Environment import SchafkopfEnv
+from game_environment import SchafkopfEnv
 from copy import deepcopy, copy
 
 

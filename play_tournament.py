@@ -1,14 +1,14 @@
 from PIMC_Player import PIMCPlayer
 from RandomPlayer import RandomPlayer
-from Game_Environment import SchafkopfEnv
+from game_environment import SchafkopfEnv
 
 
 def main():
-    pimc_player = PIMCPlayer(10, 40, RandomPlayer())
+    pimc_player = PIMCPlayer(1, 1, RandomPlayer())
 
     participants = [pimc_player, RandomPlayer(), RandomPlayer(), RandomPlayer()]
 
-    number_of_games = 1000
+    number_of_games = 1
 
     #for i in range(len(participants)):
     #    for j in range(i + 1, len(participants)):
@@ -32,6 +32,7 @@ def main():
     for game_nr in range(1, number_of_games + 1):
         state, reward, terminal = schafkopf_env.reset()
         while not terminal:
+            print(game_nr)
             action, prob = players[state["game_state"].current_player].act(state)
             state, reward, terminal = schafkopf_env.step(action, prob)
 
@@ -48,8 +49,8 @@ def main():
             # print("--------Episode: " + str(i_episode) + " game simulation (s) = " + str(t1 - t0))
             # print("--------Cummulative reward: " + str(cummulative_reward))
             # print("--------per game reward: " + str([i /i_episode for i in cummulative_reward] ))
-            # print("--------MCTS rewards: " + str(((cummulative_reward[1] + cummulative_reward[3]) / i_episode)/2))
-            # print("--------MCTS rewards: " + str(((cummulative_reward[1] + cummulative_reward[3]) / i_episode)/2))
+            # print("--------monte_carlo_tree_search rewards: " + str(((cummulative_reward[1] + cummulative_reward[3]) / i_episode)/2))
+            # print("--------monte_carlo_tree_search rewards: " + str(((cummulative_reward[1] + cummulative_reward[3]) / i_episode)/2))
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ harder to use the Monte Carlo Tree Search.
 
 class Rules:
 
-    # This class should contain all necessary rules for schafkopf to list at every state
+    # This class should contain all necessary rules for Get process_data to list at every state
     # the possible actions for the Player
 
     # phases of the game
