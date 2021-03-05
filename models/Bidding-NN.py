@@ -1,11 +1,10 @@
 import os
-
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.python.keras.optimizer_v1 import Adam
 
-from utils import one_hot_cards, translate_cards_to_str, translate_games_to_str, one_hot_encode_game
+from utils import one_hot_encode_cards, translate_cards_to_str, translate_games_to_str, one_hot_encode_game
 
 # get the pandas dataframe
 store = pd.HDFStore('training_data/data/bidding-no-pos-700k-incl-all-pass.h5') # take bidding-no-pos-700k-incl-all-pass.h5 for real process_data
@@ -28,11 +27,11 @@ test_examples = []
 test_labels = []
 
 for cards in train.games:
-    train_examples.append(one_hot_cards(cards))
+    train_examples.append(one_hot_encode_cards(cards))
 for game in train.labels:
     train_labels.append(one_hot_encode_game(game))
 for cards in test.games:
-    test_examples.append(one_hot_cards(cards))
+    test_examples.append(one_hot_encode_cards(cards))
 for game in test.labels:
     test_labels.append(one_hot_encode_game(game))
 

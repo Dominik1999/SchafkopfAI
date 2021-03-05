@@ -1,4 +1,5 @@
 import numpy as np
+
 from rules import Rules
 
 
@@ -26,30 +27,50 @@ def one_hot_encode_game(game):
     return one_hot_game
 
 
+def one_hot_encode_position(position):
+    one_hot_position = np.zeros(4)
+    one_hot_position[position] = 1
+    return one_hot_position
+
+
 def one_hot_games(games):
     one_hot_games = np.zeros(9)
     for game in games:
         one_hot_games[Rules().games.index(game)] = 1
     return one_hot_games
 
-def one_hot_card(card):
+
+def one_hot_encode_card(card):
     single_one_hot_card = np.zeros(32)
     single_one_hot_card[Rules().cards.index(card)] = 1
     return single_one_hot_card
 
 
-def one_hot_cards(cards):
-    #hand = sort_hand(cards) # Maybe sort cards to get better predictions?
+def one_hot_encode_cards(cards, game_type=None):
+    hand = sort_hand(cards, game_type)
     enc_cards = np.zeros((8, 32))
-    for card, i in zip(cards, range(8)):
-        enc_cards[i] = one_hot_card(card)
+    for card, i in zip(hand, range(8)):
+        enc_cards[i] = one_hot_encode_card(card)
     return enc_cards
 
 
-def sort_hand(cards):
-    sorted_cards = []
-    for card in cards:
-        index = Rules().cards.index(card)
+def one_hot_encode_result(result):
+    enc_result = np.zeros(2)
+    enc_result[result] = 1
+    return enc_result
+
+
+def sort_hand(cards, game_type):
+    if not game_type:
+        return sorted(cards, key=lambda card: Rules().cards.index(card))
+
+    sorted_trumps = Rules().get_sorted_trumps(game_type=game_type)
+    trumps = sorted([card for card in cards if card in sorted_trumps], key= lambda card : sorted_trumps.index(card))
+    non_trumps = sorted([card for card in cards if card not in sorted_trumps], key=lambda card: Rules().cards.index(card))
+
+    return non_trumps + trumps
+
+
 """
         self.games = [[None, None],                     # no game
                       [0, 0], [2, 0], [3, 0],           # sauspiel
@@ -63,51 +84,51 @@ def translate_cards_to_str(cards):
     cards_str = []
     for card in cards:
         if card[0] == 0:
-            str = 'Schellen-'
+            card_str = 'Schellen-'
         elif card[0] == 1:
-            str = 'Herz-'
+            card_str = 'Herz-'
         elif card[0] == 2:
-            str = 'Gras-'
+            card_str = 'Gras-'
         else:
-            str = 'Eichel-'
+            card_str = 'Eichel-'
         if card[1] == 0:
-            str += '7'
+            card_str += '7'
         elif card[1] == 1:
-            str += '8'
+            card_str += '8'
         elif card[1] == 2:
-            str += '9'
+            card_str += '9'
         elif card[1] == 3:
-            str += 'Unter'
+            card_str += 'Unter'
         elif card[1] == 4:
-            str += 'Ober'
+            card_str += 'Ober'
         elif card[1] == 5:
-            str += 'Koenig'
+            card_str += 'Koenig'
         elif card[1] == 6:
-            str += '10'
+            card_str += '10'
         else:
-            str += 'Ass'
+            card_str += 'Ass'
 
-        cards_str.append(str)
+        cards_str.append(card_str)
     return cards_str
 
 
 def translate_games_to_str(game):
     if game == [None, None]:
-        str = "Kein Spiel"
+        card_str = "Kein Spiel"
     elif game == [0, 0]:
-        str = "auf die Schellen"
+        card_str = "auf die Schellen"
     elif game == [2, 0]:
-        str = "auf die Gras"
+        card_str = "auf die Gras"
     elif game == [3, 0]:
-        str = "aus die Eichel"
+        card_str = "aus die Eichel"
     elif game == [None, 1]:
-        str = "Wenz"
+        card_str = "Wenz"
     elif game == [0, 2]:
-        str = "Schellen-Solo"
+        card_str = "Schellen-Solo"
     elif game == [1, 2]:
-        str = "Herz-Solo"
+        card_str = "Herz-Solo"
     elif game == [2, 2]:
-        str = "Gras-Solo"
+        card_str = "Gras-Solo"
     elif game == [3, 2]:
-        str = "Eichel-Solo"
-    return str
+        card_str = "Eichel-Solo"
+    return card_str
