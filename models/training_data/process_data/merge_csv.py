@@ -2,7 +2,7 @@ import os
 import glob
 import pandas as pd
 
-os.chdir("/media/pirate/Samsung_T5/EXTERN/Schafkopf-AI/Spiele")
+os.chdir("/media/pirate/Samsung_T5/EXTERN/Schafkopf-AI/Spiele/merged/")
 extension = 'csv'
 all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
 #combine all files in the list

@@ -55,7 +55,7 @@ class Rules:
 
         self.game_names = ['sauspiel', 'wenz', 'solo']
 
-        self.games = [[None, None],                      # no game
+        self.games = [None, [None, None],               # unknown yet, no game
                       [0, 0], [2, 0], [3, 0],           # sauspiel
                       [None, 1],                        # wenz
                       [0, 2], [1, 2], [2, 2], [3, 2]]   # solo
@@ -128,6 +128,7 @@ class Rules:
         :rtype: list
         """
         allowed_games = self.games.copy()
+        allowed_games.pop(0)
 
         playable_colors = {color for [color, number] in player_cards if
                            number != 3 and  # unter

@@ -1,35 +1,61 @@
+import rules
 from monte_carlo_tree_search.mct import MonteCarloTree
 from game_state import PublicGameState
 from rules import Rules
 from game_environment import SchafkopfEnv
-from Player import Player
+from agents.Player import Player
 import random
+import tensorflow as tf
+import numpy as np
+
+from utils import one_hot_encode_cards, one_hot_encode_position, one_hot_encode_protocol
 
 
-class PIMCPlayer(Player):
+class BNNPIMCPlayer(Player):
 
     def __init__(self, samples, playouts, agent):
         super().__init__()
         self.samples = samples
         self.playouts = playouts
         self.agent = agent
+        self.bidding_nn = tf.keras.models.load_model('/home/pirate/PycharmProjects/SchafkopfAI/models/trained_models/bidding-pos-nn')
 
     def act(self, state):
         if state["game_state"].game_stage == Rules.BIDDING:
-            ## ToDo: Insert standard feed forward neural network - 2 layers a 50 neurons
-            print("PIMC-Agent")
-            print(state)
-            breakpoint()
-            return self.run_mcts(state["game_state"], state["current_player_cards"])
+            return self.bidding(state["game_state"], state["current_player_cards"])
         else:
             return self.run_mcts(state["game_state"], state["current_player_cards"])
 
+    def bidding(self, game_state, player_cards):
+        hand = player_cards
+        protocol = (
+                game_state.bidding_round[game_state.first_player:] +
+                game_state.bidding_round[:game_state.first_player])
+        position = game_state.current_player - game_state.first_player
+        probabilities = self.bidding_nn.predict(
+            x={
+                'x1': np.array([one_hot_encode_cards(hand)]),
+                'x2': np.array([one_hot_encode_position(position)]),
+                'x3': np.array([one_hot_encode_protocol(protocol)])})
+
+        choice = np.argsort(np.max(probabilities, axis=0))[-1]
+        if choice == 0 and 0.5 < np.amax(probabilities) < 0.85:         # Bidding NN is really biased and shout play way more aggressive
+            choice = np.argsort(np.max(probabilities, axis=0))[-2]
+
+        game_to_choose = self.rules.games[choice + 1]
+        allowed_actions = self.rules.allowed_actions(game_state, player_cards)
+
+        if game_to_choose not in allowed_actions:
+            while game_to_choose not in allowed_actions:
+                probabilities.pop(np.argmax(probabilities))
+                game_to_choose = self.rules.games[np.argmax(probabilities) + 1]
+
+        return game_to_choose, np.amax(probabilities)
+
     def run_mcts(self, game_state, player_cards):
-        print("Run-monte_carlo_tree_search")
         cummulative_action_count_rewards = {}
 
         for i in range(self.samples):
-            print("Run-Sample")
             sampled_player_hands = self.sample_player_hands(game_state, player_cards)
             mct = MonteCarloTree(game_state, sampled_player_hands, self.rules.allowed_actions(game_state, player_cards),
                                  player=self.agent)

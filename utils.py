@@ -22,8 +22,14 @@ def two_hot_encode_game(game):
 
 
 def one_hot_encode_game(game):
-    one_hot_game = np.zeros(9)
+    one_hot_game = np.zeros(10)
     one_hot_game[Rules().games.index(game)] = 1
+    return one_hot_game
+
+
+def one_hot_encode_game_chosen(game):
+    one_hot_game = np.zeros(9)
+    one_hot_game[Rules().games.index(game) - 1] = 1 # None is not possible anymore here
     return one_hot_game
 
 
@@ -33,11 +39,11 @@ def one_hot_encode_position(position):
     return one_hot_position
 
 
-def one_hot_games(games):
-    one_hot_games = np.zeros(9)
-    for game in games:
-        one_hot_games[Rules().games.index(game)] = 1
-    return one_hot_games
+def one_hot_encode_protocol(protocol):
+    enc_protocol = np.zeros((4, 10))
+    for game, i in zip(protocol, range(4)):
+        enc_protocol[i] = one_hot_encode_game(game)
+    return enc_protocol
 
 
 def one_hot_encode_card(card):
@@ -120,7 +126,7 @@ def translate_games_to_str(game):
     elif game == [2, 0]:
         card_str = "auf die Gras"
     elif game == [3, 0]:
-        card_str = "aus die Eichel"
+        card_str = "auf die Eichel"
     elif game == [None, 1]:
         card_str = "Wenz"
     elif game == [0, 2]:

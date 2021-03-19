@@ -1,7 +1,7 @@
 import random
 
-from Node import Node
-from RandomPlayer import RandomPlayer
+from monte_carlo_tree_search.Node import Node
+from agents.RandomPlayer import RandomPlayer
 from game_environment import SchafkopfEnv
 from copy import deepcopy, copy
 

@@ -1,6 +1,10 @@
 import ast
+import random
+import copy
+
 import pandas as pd
 import re
+
 
 def translate_cards(cards):
     result = []
@@ -132,6 +136,19 @@ def remove_farbwenz_geier(games):
     return games[~games.type.str.contains('|'.join(game_types_to_remove))]
 
 
+def obfuscate_protocol(position, protocol):
+    obfustcated_protocol = copy.deepcopy(protocol)
+    for k in range(4):
+        # Ok that is weird, but the thing is, if False, then we do not know what the player chose,
+        # but we know it was something. So we enrich the data with a random Sauspiel
+        if obfustcated_protocol[k] is False:
+            obfustcated_protocol[k] = [random.choice([0, 2, 3]), 0]
+        if k < position:
+            continue
+        obfustcated_protocol[k] = None
+    return obfustcated_protocol
+
+
 def get_hands_games_position(games): # this ignores the result so far for Saupiele ToDo calculate which players won the game
     games_dict = {}
     max = 0
@@ -139,7 +156,6 @@ def get_hands_games_position(games): # this ignores the result so far for Saupie
 
     # now put the games into nice dictionary
     for i in range(games.shape[0]):
-
         game_number = int(re.search('#(.*?),', games.number.iloc[i])[0].replace(".", "").replace("#", "").replace(",", ""))
 
         if game_number > max:
@@ -151,11 +167,10 @@ def get_hands_games_position(games): # this ignores the result so far for Saupie
 
         games_dict[game_number] = ast.literal_eval(games.players.iloc[i])
         games_dict[game_number]["protocol"] = ast.literal_eval(games.bidding.iloc[i])
-        games_dict[game_number]["num_protocol"] = [False, False, False, False]
+        games_dict[game_number]["num_protocol"] = [None, None, None, None]
         games_dict[game_number]["type"] = games.type.iloc[i]
         games_dict[game_number]["result"] = translate_result(games.result.iloc[i])
         for j in range(4):
-
             for action in games_dict[game_number]["protocol"]:
                 if games_dict[game_number][j]["name"] in action:
                     if games_dict[game_number]["num_protocol"][j] == [None, 1]:
@@ -167,16 +182,18 @@ def get_hands_games_position(games): # this ignores the result so far for Saupie
 
             games_dict[game_number][j]["cards"] = translate_cards(games_dict[game_number][j]["cards"])
 
+        assert None not in games_dict[game_number]['num_protocol'] # just a sanity check
+
     # So this is rather complicated but I cannot wrap my head around it. Basically,
     # - (1) when a player passes before somebody before announced something the cards are too bad for a Rufspiel
-    # - (2) when a player passes after somebody before announced something we don't get info out of the cards
+    # - (2) when a player passes after somebody announced something we don't get info out of the cards
     # because a Rufspiel is not possible anymore for this player
     # Furthermore, if two players want to play a Solo-Game, we only know the actual game if it is a Wenz then Solo
     # announcement, because only the actual result is logged by the website. So we do not know what the other
     # potential Solo-Player might have wanted to play, we drop the cards.
 
     data_list = []
-    columns = ['cards', 'position', 'protocol', 'result']
+    columns = ['cards', 'position', 'label', 'protocol', 'points']
     for game in games_dict:
         a_player_announces_something = False
         for i, action in enumerate(games_dict[game]["num_protocol"]):
@@ -187,20 +204,29 @@ def get_hands_games_position(games): # this ignores the result so far for Saupie
                 data_list.append((
                     games_dict[game][i]["cards"],
                     i,
-                    games_dict[game]["num_protocol"],
-                    games_dict[game]["result"]          # result is only to be interpreted at certain games
+                    games_dict[game]["num_protocol"][i],
+                    obfuscate_protocol(i, games_dict[game]["num_protocol"]),
+                    games_dict[game]["result"]         # result is only to be interpreted at certain games
                 ))
                 continue
-            if a_player_announces_something and action == [None, None]:
+            elif a_player_announces_something and action == [None, None]:
                 continue
-            data_list.append((
-                games_dict[game][i]["cards"],
-                i,
-                games_dict[game]["num_protocol"],
-                games_dict[game]["result"]
-            ))
+            else:
+                data_list.append((
+                    games_dict[game][i]["cards"],
+                    i,
+                    games_dict[game]["num_protocol"][i],
+                    obfuscate_protocol(i, games_dict[game]["num_protocol"]),
+                    games_dict[game]["result"]
+                ))
+    games_data = pd.DataFrame(data=data_list, columns=columns)
 
-    return data_list, columns, (min, max)
+    store = pd.HDFStore(f'bidding-pos-{min}-{max}.h5')
+    store['games_data'] = games_data
+    store.close()
+    print(f'Chunk {min} - {max} done')
+
+    return True
 
 
 def get_all_type_of_games_with_pos_win_or_lose(games, game_type):
@@ -244,17 +270,16 @@ def get_all_type_of_games_with_pos_win_or_lose(games, game_type):
 
 # pd.set_option('display.max_colwidth', None)
 # pd.set_option('display.max_columns', None)
-filename = "/media/pirate/Samsung_T5/EXTERN/Schafkopf-AI/Spiele/merged/games-101m-new.csv"
-games = pd.read_csv(filename, sep=";", header=[0])
+filename = "/media/pirate/Samsung_T5/EXTERN/Schafkopf-AI/Spiele/merged/games-102-104.csv"
+chunksize = 10 ** 6
 
-games = remove_short_version(games)
-games = remove_farbwenz_geier(games)
+with pd.read_csv(filename, sep=";", header=[0], chunksize=chunksize) as reader:
+    for chunk in reader:
+        print('working on new chunk')
+        chunk = remove_short_version(chunk)
+        chunk = remove_farbwenz_geier(chunk)
+        get_hands_games_position(chunk)
 
-data_list, columns, (min,max) = get_hands_games_position(games)
+
 #get_all_type_of_games_with_pos_win_or_lose(games, "Wenz")
 
-games_data = pd.DataFrame(data=data_list, columns=columns)
-
-store = pd.HDFStore(f'bidding-pos-{(min,max)[0]}-{(min,max)[1]}.h5')
-store['games_data'] = games_data
-store.close()

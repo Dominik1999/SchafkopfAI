@@ -1,7 +1,7 @@
 import pandas
 
 from csv import DictWriter
-from models.training_data.process_data.process_data import get_hands_games_position, translate_cards
+from models.training_data.process_data.process_data import get_hands_games_position, translate_cards, obfuscate_protocol
 
 """
 Some examples
@@ -192,5 +192,38 @@ def test_get_hands_games_position():
     assert data_list[33] == (translate_cards(cards[2]), 2, [False, False, [None, 1], [3, 2]], 113)
     assert data_list[34] == (translate_cards(cards[3]), 3, [False, False, [None, 1], [3, 2]], 113)
 
+
+def test_obfuscate_protocol():
+    positions = [0,1,2,3]
+    protocols = [
+        [[None, None], [None, None], [None, None], [None, None]],
+        [[None, None], [0, 2], [None, None], [None, None]],
+        [[None, None], False, [2, 2], [None, None]],
+        [[None, None], False, [None, 1], [None, None]],
+    ]
+    results = []
+    expected_results = [
+        [None, None, None, None],
+        [[None, None], None, None, None],
+        [[None, None], False, None, None],
+        [[None, None], False, [None, 1], None],
+    ]
+
+    for i in range(4):
+        results.append(obfuscate_protocol(positions[i], protocols[i]))
+
+    assert results[0] == expected_results[0]
+    assert results[1] == expected_results[1]
+    assert results[2][0] == expected_results[2][0]
+    assert results[2][1] in ([0, 0], [2, 0], [3, 0])
+    assert results[2][2] == expected_results[2][2]
+    assert results[2][3] == expected_results[2][3]
+    assert results[3][0] == expected_results[3][0]
+    assert results[3][1] in ([0, 0], [2, 0], [3, 0])
+    assert results[3][2] == expected_results[3][2]
+    assert results[3][3] == expected_results[3][3]
+
+
 #create_test_csv()
 test_get_hands_games_position()
+test_obfuscate_protocol()
